@@ -61,21 +61,20 @@ fn worker(table: &mut Vec<Mutex<i32>>, random_transactions: &Vec<Vec<i32>>) {
         let random_readset_ref = &random_transactions[i];
         let mut random_readset = random_readset_ref.clone();
         let mut sorted_readset = random_readset_ref.clone();
-        let mut rows: Vec<&mut Row> = Vec::new();
         //        sort phase
         sorted_readset.rdxsort();
 
-        let mut write_set: Vec<i32> = Vec::new();
+        let mut acquired_locks: Vec<i32> = Vec::new();
 
 //      growing phase
         for index in sorted_readset {
             let mut row =  &table[index as usize];
             let mut guard = *row.lock().unwrap();
             guard = guard + 1;
-            write_set.push(guard);
+            acquired_locks.push(guard);
         }
 //      critical section
-        for mut row in write_set {
+        for mut row in acquired_locks {
             row = row + 1;
         }
 //      shrinking phase
