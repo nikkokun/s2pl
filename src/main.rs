@@ -94,12 +94,12 @@ fn main() {
     const NUM_THREADS: i32 = 1;
 
     let mut main_index= Vec::new();
-    let mut table: Vec<Row> = Vec::new();
+    let mut table: Vec<Mutex<i32>> = Vec::new();
     let mut thread_transactions: Vec<Vec<Vec<i32>>> = Vec::new();
     let mut thread_id = 0;
 
     for i in 0..NUM_ROWS {
-        let row = Row::new(i, 0);
+        let row = Mutex::new(0);
         table.push(row);
         main_index.push(i);
     }
@@ -111,6 +111,10 @@ fn main() {
     for i in 0..table.len() {
         let row = &table[i];
     }
+
+    let thread = std::spawn(move || worker(&mut table, &thread_transactions[0]));
+
+    let res = thread.join();
 
 
 
