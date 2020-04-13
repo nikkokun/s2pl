@@ -31,7 +31,6 @@ impl Row {
 
 }
 
-
 fn generate_random_transactions(main_index: &mut Vec<i32>,
                                 num_transactions: i32,
                                 num_operations: i32) -> Vec<Vec<i32>>{
@@ -55,34 +54,31 @@ fn generate_random_transactions(main_index: &mut Vec<i32>,
     return random_transactions;
 }
 
-fn worker(table: &mut Vec<Row>, random_transactions: &Vec<Vec<i32>>) {
+fn worker(table: &mut Vec<Mutex<i32>>, random_transactions: &Vec<Vec<i32>>) {
 
 
     for i in 0..random_transactions.len() {
         let random_readset_ref = &random_transactions[i];
         let mut random_readset = random_readset_ref.clone();
         let mut sorted_readset = random_readset_ref.clone();
+        let mut rows: Vec<&mut Row> = Vec::new();
         //        sort phase
         sorted_readset.rdxsort();
 
-        let mut acquired_locks: Vec<MutexGuard<i32>> = Vec::new();
-
+        let mut write_set: Vec<i32> = Vec::new();
 
 //      growing phase
         for index in sorted_readset {
-            let u_index = index  as usize;
-            let mut row = &mut table[u_index];
-            let mut guard = row.lock.lock().unwrap();
-            acquired_locks.push(guard);
+            let mut row =  &table[index as usize];
+            let mut guard = *row.lock().unwrap();
+            guard = guard + 1;
+            write_set.push(guard);
         }
 //      critical section
-        for index in random_readset {
-            let u_index = index as usize;
-            let mut row = &mut table[u_index];
-            row.set_value(row.get_value() + 1);
+        for mut row in write_set {
+            row = row + 1;
         }
         std::mem::drop(acquired_locks);
-
 //      shrinking phase
     }
     //release all the acquired locks
