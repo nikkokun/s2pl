@@ -78,7 +78,6 @@ fn worker(table: &mut Vec<Mutex<i32>>, random_transactions: &Vec<Vec<i32>>) {
         for mut row in write_set {
             row = row + 1;
         }
-        std::mem::drop(acquired_locks);
 //      shrinking phase
     }
     //release all the acquired locks
